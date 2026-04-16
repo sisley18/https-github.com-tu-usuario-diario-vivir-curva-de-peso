@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALCO - Curva de Peso + Materiales</title>
+    <meta name="description" content="Herramienta para registrar la curva grupal de peso y compartir materiales del grupo ALCO.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #faf8f5;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255,255,255,0.85);
+            --accent-violet: #5a3fd6;
+            --accent-violet-light: #7c63e8;
+            --accent-teal: #0d9488;
+            --accent-teal-light: #2dd4bf;
+            --accent-orange: #d95f24;
+            --accent-orange-light: #f59e0b;
+            --accent-pink: #ec4899;
+            --text-primary: #1a2332;
+            --text-secondary: #4a5568;
+            --text-muted: #94a3b8;
+            --border: rgba(90, 63, 214, 0.12);
+            --border-hover: rgba(90, 63, 214, 0.25);
+            --shadow-soft: 0 4px 24px rgba(26, 35, 50, 0.06);
+            --shadow-medium: 0 8px 32px rgba(26, 35, 50, 0.1);
+            --radius: 16px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+
+        .bg-decoration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+        .bg-decoration .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; animation: float 20s ease-in-out infinite; }
+        .bg-decoration .orb:nth-child(1) { width: 400px; height: 400px; background: var(--accent-violet); top: -100px; left: -100px; animation-delay: 0s; }
+        .bg-decoration .orb:nth-child(2) { width: 350px; height: 350px; background: var(--accent-teal); top: 50%; right: -100px; animation-delay: -7s; }
+        .bg-decoration .orb:nth-child(3) { width: 300px; height: 300px; background: var(--accent-orange-light); bottom: -50px; left: 30%; animation-delay: -14s; }
+        @keyframes float { 0%,100%{transform:translate(0,0)scale(1);} 25%{transform:translate(30px,-40px)scale(1.05);} 50%{transform:translate(-20px,20px)scale(0.95);} 75%{transform:translate(40px,30px)scale(1.02);} }
+
+        .header { position: relative; z-index: 10; text-align: center; padding: 40px 20px 20px; }
+        .header .logo { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .header .logo-icon { width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent-violet), var(--accent-teal)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; box-shadow: 0 4px 16px rgba(90,63,214,0.25); }
+        .header h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, var(--accent-violet), var(--accent-teal)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; letter-spacing: -0.5px; }
+        .header .subtitle { font-size: 0.95rem; color: var(--text-secondary); margin-top: 4px; }
+
+        .container { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 0 20px 40px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 28px; margin-bottom: 24px; box-shadow: var(--shadow-soft); backdrop-filter: blur(12px); transition: var(--transition); }
+        .card:hover { box-shadow: var(--shadow-medium); border-color: var(--border-hover); }
+        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .card-title .icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .card-title .icon.violet { background: rgba(90,63,214,0.1); }
+        .card-title .icon.teal { background: rgba(13,148,136,0.1); }
+        .card-title .icon.orange { background: rgba(217,95,36,0.1); }
+        .card-title .icon.pink { background: rgba(236,72,153,0.1); }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media(max-width:768px){ .grid-2 { grid-template-columns: 1fr; } }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select { width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); font-family: 'Inter',sans-serif; font-size: 0.95rem; color: var(--text-primary); background: var(--bg-secondary); transition: var(--transition); outline: none; }
+        input:focus, select:focus { border-color: var(--accent-violet); box-shadow: 0 0 0 3px rgba(90,63,214,0.1); }
+        input::placeholder { color: var(--text-muted); }
+
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border: none; border-radius: var(--radius-sm); font-family: 'Inter',sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: var(--transition); text-decoration: none; }
+        .btn-primary { background: linear-gradient(135deg, var(--accent-violet), var(--accent-violet-light)); color: white; box-shadow: 0 4px 14px rgba(90,63,214,0.25); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(90,63,214,0.35); }
+        .btn-teal { background: linear-gradient(135deg, var(--accent-teal), var(--accent-teal-light)); color: white; box-shadow: 0 4px 14px rgba(13,148,136,0.25); }
+        .btn-teal:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,0.35); }
+        .btn-pink { background: linear-gradient(135deg, #ec4899, #8b5cf6); color: white; box-shadow: 0 4px 14px rgba(236,72,153,0.25); }
+        .btn-pink:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(236,72,153,0.35); }
+        .btn-outline { background: transparent; color: var(--accent-violet); border: 1.5px solid var(--accent-violet); }
+        .btn-outline:hover { background: rgba(90,63,214,0.06); }
+        .btn-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; box-shadow: 0 4px 14px rgba(231,76,60,0.25); }
+        .btn-danger:hover { transform: translateY(-2px); }
+        .btn-sm { padding: 8px 14px; font-size: 0.82rem; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .inline-form { display: flex; gap: 10px; align-items: flex-end; }
+        .inline-form .form-group { margin-bottom: 0; flex: 1; }
+        .inline-form .btn { flex-shrink: 0; height: 46px; }
+        @media(max-width:600px){ .inline-form { flex-direction: column; align-items: stretch; } }
+
+        .table-wrapper { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: linear-gradient(135deg,rgba(90,63,214,0.06),rgba(13,148,136,0.04)); padding: 12px 16px; text-align: left; font-weight: 600; color: var(--text-primary); border-bottom: 2px solid var(--border); white-space: nowrap; }
+        td { padding: 10px 16px; border-bottom: 1px solid rgba(0,0,0,0.04); color: var(--text-secondary); }
+        tr:hover td { background: rgba(90,63,214,0.02); }
+        tr:last-child td { border-bottom: none; }
+
+        .participant-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; background: rgba(90,63,214,0.08); color: var(--accent-violet); }
+        .chip .remove-chip { cursor: pointer; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(231,76,60,0.15); color: #e74c3c; font-size: 12px; font-weight: 700; transition: var(--transition); }
+        .chip .remove-chip:hover { background: #e74c3c; color: white; }
+
+        .chart-container { position: relative; width: 100%; min-height: 400px; padding: 10px; }
+        .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-up { background: rgba(231,76,60,0.1); color: #e74c3c; }
+        .badge-down { background: rgba(13,148,136,0.1); color: #0d9488; }
+        .badge-same { background: rgba(148,163,184,0.15); color: #64748b; }
+
+        .tabs { display: flex; gap: 4px; background: rgba(90,63,214,0.05); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 20px; }
+        .tab { flex: 1; padding: 10px 16px; border: none; background: transparent; border-radius: var(--radius-xs); font-family: 'Inter',sans-serif; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: var(--transition); text-align: center; }
+        .tab.active { background: var(--bg-secondary); color: var(--accent-violet); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: linear-gradient(135deg,rgba(90,63,214,0.04),rgba(13,148,136,0.02)); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; color: var(--accent-violet); }
+        .stat-label { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+        .empty-state { text-align: center; padding: 32px 20px; color: var(--text-muted); }
+        .empty-state .emoji { font-size: 2.5rem; margin-bottom: 10px; }
+        .empty-state p { font-size: 0.9rem; }
+
+        .toast { position: fixed; bottom: 30px; right: 30px; padding: 14px 24px; border-radius: var(--radius-sm); background: var(--accent-violet); color: white; font-family: 'Inter',sans-serif; font-weight: 500; font-size: 0.9rem; box-shadow: var(--shadow-medium); z-index: 1000; transform: translateY(100px); opacity: 0; transition: var(--transition); }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        .modal-overlay { display: none; position: fixed; top:0;left:0;right:0;bottom:0; background: rgba(26,35,50,0.4); backdrop-filter: blur(4px); z-index: 500; align-items: center; justify-content: center; }
+        .modal-overlay.show { display: flex; }
+        .modal { background: var(--bg-secondary); border-radius: var(--radius); padding: 32px; max-width: 500px; width: 90%; box-shadow: var(--shadow-medium); animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from{transform:scale(0.9);opacity:0;} to{transform:scale(1);opacity:1;} }
+        .modal h3 { font-size: 1.1rem; margin-bottom: 16px; }
+        .modal .btn-group { margin-top: 20px; justify-content: flex-end; }
+
+        .weight-inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .weight-input-item { display: flex; align-items: center; gap: 8px; }
+        .weight-input-item label { font-size: 0.85rem; font-weight: 500; color: var(--text-secondary); min-width: 80px; margin-bottom: 0; text-transform: none; letter-spacing: 0; }
+        .weight-input-item input { width: 100px; }
+        @media(max-width:600px){ .weight-inputs-grid{grid-template-columns:1fr;} }
+
+        .diff-cell { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: var(--radius-xs); padding: 2px 6px; transition: var(--transition); }
+        .diff-cell:hover { background: rgba(90,63,214,0.06); }
+        .diff-cell .edit-hint { font-size: 11px; opacity: 0.4; transition: var(--transition); }
+        .diff-cell:hover .edit-hint { opacity: 0.8; }
+        .diff-input-inline { width: 80px; padding: 4px 8px; font-size: 0.85rem; border: 1.5px solid var(--accent-violet); border-radius: var(--radius-xs); font-family: 'Inter',sans-serif; outline: none; box-shadow: 0 0 0 3px rgba(90,63,214,0.1); text-align: center; }
+
+        .week-selector { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .week-selector select { width: auto; min-width: 200px; }
+
+        /* ── PDF SECTION ── */
+        #pdfFileInput { display: none; }
+        #importFile { display: none; }
+
+        .pdf-upload-area {
+            border: 2px dashed rgba(236,72,153,0.3);
+            border-radius: var(--radius-sm);
+            padding: 32px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, rgba(236,72,153,0.02), rgba(139,92,246,0.02));
+        }
+        .pdf-upload-area:hover { border-color: rgba(236,72,153,0.6); background: rgba(236,72,153,0.04); }
+        .pdf-upload-area .up-icon { font-size: 3rem; margin-bottom: 10px; }
+        .pdf-upload-area strong { font-size: 1rem; color: var(--text-primary); display: block; margin-bottom: 4px; }
+        .pdf-upload-area p { color: var(--text-muted); font-size: 0.85rem; }
+        .pdf-upload-area .size-note { font-size: 0.75rem; margin-top: 6px; color: rgba(148,163,184,0.8); }
+
+        .upload-progress-wrap { width: 100%; height: 5px; background: rgba(236,72,153,0.12); border-radius: 3px; margin-top: 12px; display: none; overflow: hidden; }
+        .upload-progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#ec4899,#8b5cf6); border-radius: 3px; transition: width 0.15s; }
+
+        .pdf-list { display: flex; flex-direction: column; gap: 10px; }
+        .pdf-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: linear-gradient(135deg,rgba(236,72,153,0.04),rgba(90,63,214,0.03)); border: 1px solid rgba(236,72,153,0.15); border-radius: var(--radius-sm); transition: var(--transition); }
+        .pdf-item:hover { border-color: rgba(236,72,153,0.35); box-shadow: var(--shadow-soft); }
+        .pdf-icon { width: 48px; height: 48px; background: linear-gradient(135deg,#ec4899,#8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; color: white; }
+        .pdf-info { flex: 1; min-width: 0; }
+        .pdf-name { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pdf-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+        .pdf-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+        @media(max-width:600px) { .header h1{font-size:1.4rem;} .card{padding:20px;} .stats-grid{grid-template-columns:repeat(2,1fr);} .pdf-item{flex-wrap:wrap;} }
+    </style>
+</head>
+<body>
+<div class="bg-decoration">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+</div>
+
+<header class="header">
+    <div class="logo">
+        <div class="logo-icon">📊</div>
+        <div>
+            <h1>Curva Grupal de Peso</h1>
+            <p class="subtitle">Registro, seguimiento y materiales · ALCO</p>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+
+    <!-- PARTICIPANTS + WEEK -->
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-title"><span class="icon violet">👥</span>Participantes</div>
+            <div class="inline-form">
+                <div class="form-group">
+                    <label for="inputName">Nombre del participante</label>
+                    <input type="text" id="inputName" placeholder="Ej: María, Juan..." onkeydown="if(event.key==='Enter') addParticipant()">
+                </div>
+                <button class="btn btn-primary" onclick="addParticipant()">➕ Agregar</button>
+            </div>
+            <div class="participant-list" id="participantList"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><span class="icon teal">📅</span>Agregar Semana</div>
+            <div class="form-group">
+                <label for="inputWeekLabel">Etiqueta de la semana</label>
+                <input type="text" id="inputWeekLabel" placeholder="Ej: Semana 1, 07/04, Abril...">
+            </div>
+            <button class="btn btn-teal" onclick="openWeightModal()">⚖️ Registrar Pesos</button>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid" id="statsGrid" style="display:none;">
+        <div class="stat-card"><div class="stat-value" id="statParticipants">0</div><div class="stat-label">Participantes</div></div>
+        <div class="stat-card"><div class="stat-value" id="statWeeks">0</div><div class="stat-label">Semanas</div></div>
+        <div class="stat-card"><div class="stat-value" id="statAvgChange">—</div><div class="stat-label">Cambio Promedio</div></div>
+        <div class="stat-card"><div class="stat-value" id="statBestResult">—</div><div class="stat-label">Mejor Resultado</div></div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card" id="card-chart" style="display:none;">
+        <div class="card-title"><span class="icon violet">📈</span>Curva de Peso</div>
+        <div class="tabs">
+            <button class="tab active" onclick="setChartMode('individual',this)">Individual</button>
+            <button class="tab" onclick="setChartMode('group',this)">Promedio Grupal</button>
+            <button class="tab" onclick="setChartMode('both',this)">Ambos</button>
+        </div>
+        <div class="chart-container"><canvas id="weightChart"></canvas></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card" id="card-table" style="display:none;">
+        <div class="card-title"><span class="icon teal">📋</span>Tabla de Datos</div>
+        <div class="week-selector" id="weekEditSelector" style="display:none;">
+            <label style="font-size:0.85rem;font-weight:600;color:var(--text-secondary);">Editar semana:</label>
+            <select id="editWeekSelect"></select>
+            <button class="btn btn-outline btn-sm" onclick="openEditWeekModal()">✏️ Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSelectedWeek()">🗑️ Eliminar</button>
+        </div>
+        <div class="table-wrapper">
+            <table><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
+        </div>
+    </div>
+
+    <!-- PDF MATERIALS -->
+    <div class="card" id="card-pdfs">
+        <div class="card-title"><span class="icon pink">📄</span>Materiales del Grupo</div>
+
+        <div class="pdf-upload-area" onclick="document.getElementById('pdfFileInput').click()" id="pdfDropZone">
+            <div class="up-icon">📤</div>
+            <strong>Subir material al grupo</strong>
+            <p>Hacé clic para seleccionar un PDF, Word o PowerPoint</p>
+            <p class="size-note">Máximo 8 MB · los archivos se guardan en este navegador</p>
+            <div class="upload-progress-wrap" id="uploadProgressWrap">
+                <div class="upload-progress-bar" id="uploadProgressBar"></div>
+            </div>
+        </div>
+        <input type="file" id="pdfFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" onchange="handlePdfUpload(event)">
+
+        <div class="pdf-list" id="pdfList">
+            <div class="empty-state">
+                <div class="emoji">📂</div>
+                <p>No hay materiales cargados aún</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="card">
+        <div class="card-title"><span class="icon orange">⚙️</span>Acciones</div>
+        <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="exportData()">💾 Exportar Datos</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()">📂 Importar Datos</button>
+            <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+            <button class="btn btn-danger btn-sm" onclick="confirmReset()">🗑️ Reiniciar Todo</button>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<!-- MODALS -->
+<div class="modal-overlay" id="weightModal">
+    <div class="modal">
+        <h3 id="modalTitle">⚖️ Registrar Pesos</h3>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">Ingresá el peso en kg de cada participante. Dejá vacío si no asistió.</p>
+        <div class="weight-inputs-grid" id="weightInputs"></div>
+        <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="closeWeightModal()">Cancelar</button>
+            <button class="btn btn-teal btn-sm" onclick="saveWeights()">💾 Guardar</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="resetModal">
+    <div class="modal">
+        <h3>⚠️ ¿Reiniciar todo?</h3>
+        <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:16px;">Se eliminarán todos los participantes, semanas, pesos y materiales. No se puede deshacer.</p>
+        <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="closeResetModal()">Cancelar</button>
+            <button class="btn btn-danger btn-sm" onclick="resetAll()">Sí, reiniciar</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA MODEL
+// ══════════════════════════════════════════
+const STORAGE_KEY = 'alco_curva_grupal_v2';
+
+let data = {
+    participants: [],
+    weeks:        [],
+    weights:      {},
+    differences:  {},
+    pdfs:         []    // [ { id, name, size, type, b64, uploadedAt } ]
+};
+
+// ══════════════════════════════════════════
+// PERSISTENCE
+// ══════════════════════════════════════════
+function saveData() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch(e) {
+        if (e.name === 'QuotaExceededError') showToast('⚠️ Sin espacio en el navegador. Eliminá materiales grandes.');
+        else showToast('❌ Error al guardar');
+    }
+}
+
+function loadData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+        try {
+            const parsed = JSON.parse(raw);
+            data.participants = parsed.participants || [];
+            data.weeks        = parsed.weeks        || [];
+            data.weights      = parsed.weights      || {};
+            data.differences  = parsed.differences  || {};
+            data.pdfs         = parsed.pdfs         || [];
+        } catch(e) { console.error('Load error', e); }
+    }
+}
+
+// ══════════════════════════════════════════
+// PARTICIPANTS
+// ══════════════════════════════════════════
+function addParticipant() {
+    const input = document.getElementById('inputName');
+    const name  = input.value.trim();
+    if (!name) return showToast('Escribí un nombre');
+    if (data.participants.includes(name)) return showToast('Ya existe ese participante');
+    data.participants.push(name);
+    data.weights[name] = new Array(data.weeks.length).fill(null);
+    saveData(); input.value = ''; input.focus();
+    renderAll();
+    showToast(`✅ ${name} agregado/a`);
+}
+
+function removeParticipant(name) {
+    if (!confirm(`¿Eliminar a ${name}?`)) return;
+    data.participants = data.participants.filter(n => n !== name);
+    delete data.weights[name];
+    saveData(); renderAll();
+    showToast(`${name} eliminado/a`);
+}
+
+function renderParticipants() {
+    const c = document.getElementById('participantList');
+    if (!data.participants.length) { c.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px;">No hay participantes aún</p>'; return; }
+    c.innerHTML = data.participants.map(n => `<div class="chip">${n}<span class="remove-chip" onclick="removeParticipant('${n.replace(/'/g,"\\'")}')">✕</span></div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// WEEKS & WEIGHTS
+// ══════════════════════════════════════════
+let editingWeekIndex = -1;
+
+function openWeightModal() {
+    if (!data.participants.length) return showToast('Primero agregá participantes');
+    const lbl = document.getElementById('inputWeekLabel').value.trim();
+    if (!lbl) return showToast('Escribí una etiqueta para la semana');
+    if (data.weeks.includes(lbl)) return showToast('Esa semana ya existe');
+    editingWeekIndex = -1;
+    document.getElementById('modalTitle').textContent = `⚖️ Pesos - ${lbl}`;
+    renderWeightInputs();
+    document.getElementById('weightModal').classList.add('show');
+}
+
+function openEditWeekModal() {
+    const idx = parseInt(document.getElementById('editWeekSelect').value);
+    if (isNaN(idx)) return;
+    editingWeekIndex = idx;
+    document.getElementById('modalTitle').textContent = `✏️ Editar - ${data.weeks[idx]}`;
+    renderWeightInputs(idx);
+    document.getElementById('weightModal').classList.add('show');
+}
+
+function renderWeightInputs(weekIdx) {
+    document.getElementById('weightInputs').innerHTML = data.participants.map((name, i) => {
+        const v = weekIdx !== undefined && data.weights[name] ? (data.weights[name][weekIdx] ?? '') : '';
+        return `<div class="weight-input-item"><label>${name}</label><input type="number" step="0.1" min="0" id="wi_${i}" placeholder="kg" value="${v}" onkeydown="if(event.key==='Enter') saveWeights()"></div>`;
+    }).join('');
+    setTimeout(() => { const f = document.getElementById('wi_0'); if(f) f.focus(); }, 150);
+}
+
+function closeWeightModal() { document.getElementById('weightModal').classList.remove('show'); }
+
+function saveWeights() {
+    const weights = {}; let hasAny = false;
+    data.participants.forEach((name, i) => {
+        const val = document.getElementById(`wi_${i}`).value;
+        weights[name] = val ? parseFloat(val) : null;
+        if (val) hasAny = true;
+    });
+    if (!hasAny) return showToast('Ingresá al menos un peso');
+    if (editingWeekIndex >= 0) {
+        data.participants.forEach(n => { data.weights[n][editingWeekIndex] = weights[n]; });
+        showToast('✅ Semana actualizada');
+    } else {
+        const lbl = document.getElementById('inputWeekLabel').value.trim();
+        data.weeks.push(lbl);
+        data.participants.forEach(n => { if (!data.weights[n]) data.weights[n] = []; data.weights[n].push(weights[n]); });
+        document.getElementById('inputWeekLabel').value = '';
+        showToast(`✅ ${lbl} registrada`);
+    }
+    saveData(); closeWeightModal(); renderAll();
+}
+
+function deleteSelectedWeek() {
+    const idx = parseInt(document.getElementById('editWeekSelect').value);
+    if (isNaN(idx)) return;
+    const lbl = data.weeks[idx];
+    if (!confirm(`¿Eliminar "${lbl}"?`)) return;
+    data.weeks.splice(idx, 1);
+    data.participants.forEach(n => { if (data.weights[n]) data.weights[n].splice(idx, 1); });
+    saveData(); renderAll(); showToast(`${lbl} eliminada`);
+}
+
+// ══════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════
+function renderAll() {
+    renderParticipants(); renderStats(); renderTable(); renderChart(); renderWeekSelector(); renderPDFs();
+}
+
+// ══════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════
+function renderStats() {
+    const grid = document.getElementById('statsGrid');
+    if (!data.weeks.length || !data.participants.length) { grid.style.display = 'none'; return; }
+    grid.style.display = 'grid';
+    document.getElementById('statParticipants').textContent = data.participants.length;
+    document.getElementById('statWeeks').textContent        = data.weeks.length;
+    let total = 0, count = 0, bestName = '', bestChange = 0;
+    data.participants.forEach(name => {
+        const d = getDiff(name);
+        if (d !== null) { total += d; count++; if (d < bestChange || !bestName) { bestChange = d; bestName = name; } }
+    });
+    const avgEl = document.getElementById('statAvgChange');
+    const bestEl = document.getElementById('statBestResult');
+    if (count > 0) {
+        const avg = total / count;
+        avgEl.textContent = `${avg>0?'+':''}${avg.toFixed(1)} kg`; avgEl.style.color = avg<=0?'var(--accent-teal)':'var(--accent-orange)';
+        bestEl.textContent = `${bestName} (${bestChange>0?'+':''}${bestChange.toFixed(1)})`; bestEl.style.color = 'var(--accent-teal)';
+    } else { avgEl.textContent = '—'; avgEl.style.color = ''; bestEl.textContent = '—'; bestEl.style.color = ''; }
+}
+
+function getDiff(name) {
+    const md = (data.differences||{})[name];
+    if (md !== undefined && md !== null) return md;
+    const w = data.weights[name] || [];
+    const first = w.find(v => v !== null);
+    const last  = [...w].reverse().find(v => v !== null);
+    if (first != null && last != null && w.indexOf(first) !== (w.length-1 - [...w].reverse().indexOf(last))) return last - first;
+    return null;
+}
+
+// ══════════════════════════════════════════
+// TABLE
+// ══════════════════════════════════════════
+function renderTable() {
+    const card = document.getElementById('card-table');
+    if (!data.weeks.length || !data.participants.length) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+
+    document.getElementById('tableHead').innerHTML = `<tr><th>Participante</th>${data.weeks.map((w,wi) => wi===0?`<th>${w}</th>`:`<th>${w}</th><th style="font-size:0.75rem;color:var(--accent-teal);">Dif.</th>`).join('')}<th>Diferencia Total</th></tr>`;
+
+    const rows = data.participants.map(name => {
+        const w   = data.weights[name] || [];
+        const diff = getDiff(name);
+        const esc  = name.replace(/'/g,"\\'");
+        let diffHtml = diff !== null
+            ? `<span class="diff-cell" onclick="editDifference('${esc}')" title="Clic para editar"><span class="badge ${diff<0?'badge-down':diff>0?'badge-up':'badge-same'}">${diff>0?'+':''}${diff.toFixed(1)} kg</span><span class="edit-hint">✏️</span></span>`
+            : `<span class="diff-cell" onclick="editDifference('${esc}')" title="Clic para editar"><span style="color:var(--text-muted)">—</span><span class="edit-hint">✏️</span></span>`;
+        let cells = '';
+        w.forEach((v,wi) => {
+            cells += `<td>${v!==null?v+' kg':'—'}</td>`;
+            if (wi>0) {
+                const prev = w[wi-1];
+                if (prev!==null && v!==null) { const d=v-prev; cells += `<td><span class="badge ${d<0?'badge-down':d>0?'badge-up':'badge-same'}">${d>0?'+':''}${d.toFixed(1)}</span></td>`; }
+                else cells += `<td style="color:var(--text-muted)">—</td>`;
+            }
+        });
+        return `<tr><td><strong>${name}</strong></td>${cells}<td>${diffHtml}</td></tr>`;
+    }).join('');
+
+    // Avg row
+    let avgCells = '';
+    data.weeks.forEach((_,wi) => {
+        let s=0,c=0; data.participants.forEach(n=>{ const v=(data.weights[n]||[])[wi]; if(v!==null&&v!==undefined){s+=v;c++;} });
+        avgCells += `<td>${c>0?(s/c).toFixed(1)+' kg':'—'}</td>`;
+        if(wi>0){let sp=0,cp=0;data.participants.forEach(n=>{const vp=(data.weights[n]||[])[wi-1];if(vp!==null&&vp!==undefined){sp+=vp;cp++;}});if(c>0&&cp>0){const d=(s/c)-(sp/cp);avgCells+=`<td><span class="badge ${d<0?'badge-down':d>0?'badge-up':'badge-same'}">${d>0?'+':''}${d.toFixed(1)}</span></td>`;}else avgCells+=`<td>—</td>`;}
+    });
+
+    // Grand total
+    let gt=0,gc=0; data.participants.forEach(n=>{const d=getDiff(n);if(d!==null){gt+=d;gc++;}});
+    const gtHtml = gc>0?`<span class="badge ${gt<0?'badge-down':gt>0?'badge-up':'badge-same'}" style="font-size:0.9rem;padding:5px 14px;">${gt>0?'+':''}${gt.toFixed(1)} kg</span>`:'';
+
+    // Sum diff row
+    let sdCells = '';
+    data.weeks.forEach((_,wi)=>{ sdCells+=`<td></td>`; if(wi>0){let td=0,cd=0;data.participants.forEach(n=>{const w=data.weights[n]||[];const vp=w[wi-1],vc=w[wi];if(vp!==null&&vp!==undefined&&vc!==null&&vc!==undefined){td+=vc-vp;cd++;}});if(cd>0){const cls=td<0?'badge-down':td>0?'badge-up':'badge-same';sdCells+=`<td><strong><span class="badge ${cls}" style="font-size:0.85rem;padding:4px 12px;">${td>0?'+':''}${td.toFixed(1)} kg</span></strong></td>`;}else sdCells+=`<td>—</td>`;}});
+
+    document.getElementById('tableBody').innerHTML = rows
+        + `<tr style="background:rgba(90,63,214,0.04);font-weight:600;"><td>📊 Promedio Grupal</td>${avgCells}<td></td></tr>`
+        + `<tr style="background:rgba(13,148,136,0.06);font-weight:700;border-top:2px solid var(--accent-teal);"><td>➕ Suma de Diferencias</td>${sdCells}<td><strong>${gtHtml}</strong></td></tr>`;
+}
+
+function renderWeekSelector() {
+    const c = document.getElementById('weekEditSelector');
+    const sel = document.getElementById('editWeekSelect');
+    if (!data.weeks.length) { c.style.display='none'; return; }
+    c.style.display = 'flex';
+    sel.innerHTML = data.weeks.map((w,i) => `<option value="${i}">${w}</option>`).join('');
+}
+
+// ══════════════════════════════════════════
+// CHART
+// ══════════════════════════════════════════
+let chartInstance = null, chartMode = 'individual';
+const CHART_COLORS = ['#5a3fd6','#0d9488','#d95f24','#e74c3c','#3b82f6','#8b5cf6','#06b6d4','#f59e0b','#ec4899','#10b981','#6366f1','#14b8a6','#f97316','#ef4444','#0ea5e9'];
+
+function setChartMode(mode, btn) {
+    chartMode = mode; document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); renderChart();
+}
+
+function renderChart() {
+    const card = document.getElementById('card-chart');
+    if (!data.weeks.length || !data.participants.length) { card.style.display='none'; return; }
+    card.style.display = 'block';
+    if (chartInstance) chartInstance.destroy();
+    const ctx = document.getElementById('weightChart').getContext('2d');
+    const datasets = [];
+    if (chartMode==='individual'||chartMode==='both') {
+        data.participants.forEach((name,i) => datasets.push({ label:name, data:(data.weights[name]||[]).map(v=>v===null?undefined:v), borderColor:CHART_COLORS[i%CHART_COLORS.length], backgroundColor:CHART_COLORS[i%CHART_COLORS.length]+'20', borderWidth:2.5, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:CHART_COLORS[i%CHART_COLORS.length], tension:0.3, spanGaps:true, fill:false }));
+    }
+    if (chartMode==='group'||chartMode==='both') {
+        const avgData = data.weeks.map((_,wi) => { let s=0,c=0; data.participants.forEach(n=>{const v=(data.weights[n]||[])[wi];if(v!==null&&v!==undefined){s+=v;c++;}}); return c>0?parseFloat((s/c).toFixed(1)):undefined; });
+        datasets.push({ label:'📊 Promedio Grupal', data:avgData, borderColor:'#1a2332', backgroundColor:'rgba(26,35,50,0.08)', borderWidth:3.5, borderDash:chartMode==='both'?[8,4]:[], pointRadius:6, pointHoverRadius:9, pointBackgroundColor:'#1a2332', pointStyle:'rectRounded', tension:0.3, spanGaps:true, fill:chartMode==='group' });
+    }
+    chartInstance = new Chart(ctx, { type:'line', data:{labels:data.weeks,datasets}, options:{ responsive:true, maintainAspectRatio:false, interaction:{mode:'index',intersect:false}, plugins:{ legend:{position:'bottom',labels:{font:{family:'Inter',size:12,weight:'500'},padding:16,usePointStyle:true,pointStyleWidth:12}}, tooltip:{backgroundColor:'rgba(26,35,50,0.92)',titleFont:{family:'Inter',weight:'600'},bodyFont:{family:'Inter'},padding:12,cornerRadius:8,callbacks:{label:ctx=>ctx.dataset.label+': '+(ctx.parsed.y!==null?ctx.parsed.y+' kg':'sin dato')}} }, scales:{ x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{family:'Inter',size:12}}}, y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{font:{family:'Inter',size:12},callback:val=>val+' kg'}} } } });
+}
+
+// ══════════════════════════════════════════
+// PDF UPLOAD
+// ══════════════════════════════════════════
+const MAX_SIZE_MB = 8;
+
+function fmtSize(bytes) {
+    if (!bytes) return '';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(0)+' KB';
+    return (bytes/(1024*1024)).toFixed(1)+' MB';
+}
+
+function fmtDate(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}); } catch { return ''; }
+}
+
+function handlePdfUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) return showToast(`❌ El archivo supera los ${MAX_SIZE_MB} MB`);
+
+    const wrap = document.getElementById('uploadProgressWrap');
+    const bar  = document.getElementById('uploadProgressBar');
+    wrap.style.display = 'block';
+    bar.style.width    = '0%';
+
+    const reader = new FileReader();
+    let prog = 0;
+    const interval = setInterval(() => { prog = Math.min(prog + 10, 85); bar.style.width = prog + '%'; }, 80);
+
+    reader.onload = function(e) {
+        clearInterval(interval);
+        bar.style.width = '100%';
+        setTimeout(() => { wrap.style.display = 'none'; bar.style.width = '0%'; }, 500);
+
+        if (!data.pdfs) data.pdfs = [];
+        data.pdfs.unshift({
+            id:         'pdf_' + Date.now(),
+            name:       file.name,
+            size:       file.size,
+            type:       file.type,
+            uploadedAt: new Date().toISOString(),
+            b64:        e.target.result
+        });
+        saveData();
+        renderPDFs();
+        showToast('✅ Material subido correctamente');
+        event.target.value = '';
+    };
+
+    reader.onerror = function() {
+        clearInterval(interval);
+        wrap.style.display = 'none';
+        showToast('❌ Error al leer el archivo');
+    };
+
+    reader.readAsDataURL(file);
+}
+
+function deletePDF(id) {
+    if (!confirm('¿Eliminar este material?')) return;
+    data.pdfs = (data.pdfs||[]).filter(p => p.id !== id);
+    saveData(); renderPDFs();
+    showToast('Material eliminado');
+}
+
+function downloadPDF(id) {
+    const pdf = (data.pdfs||[]).find(p => p.id === id);
+    if (!pdf) return;
+    const a = document.createElement('a');
+    a.href     = pdf.b64;
+    a.download = pdf.name;
+    a.click();
+}
+
+function renderPDFs() {
+    const list = document.getElementById('pdfList');
+    const pdfs = data.pdfs || [];
+    if (!pdfs.length) {
+        list.innerHTML = `<div class="empty-state"><div class="emoji">📂</div><p>No hay materiales cargados aún</p></div>`;
+        return;
+    }
+    list.innerHTML = pdfs.map(pdf => `
+        <div class="pdf-item">
+            <div class="pdf-icon">📄</div>
+            <div class="pdf-info">
+                <div class="pdf-name" title="${pdf.name}">${pdf.name}</div>
+                <div class="pdf-meta">${pdf.size?fmtSize(pdf.size)+' · ':''}${pdf.uploadedAt?fmtDate(pdf.uploadedAt):''}</div>
+            </div>
+            <div class="pdf-actions">
+                <button class="btn btn-pink btn-sm" onclick="downloadPDF('${pdf.id}')">⬇️ Descargar</button>
+                <button class="btn btn-danger btn-sm" onclick="deletePDF('${pdf.id}')" title="Eliminar">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ══════════════════════════════════════════
+// EXPORT / IMPORT
+// ══════════════════════════════════════════
+function exportData() {
+    const clone = { participants: data.participants, weeks: data.weeks, weights: data.weights, differences: data.differences };
+    const blob = new Blob([JSON.stringify(clone, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download=`curva_peso_alco_${new Date().toISOString().slice(0,10)}.json`; a.click();
+    URL.revokeObjectURL(url);
+    showToast('💾 Datos exportados');
+}
+
+function importData(event) {
+    const file = event.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const imp = JSON.parse(e.target.result);
+            if (imp.participants && imp.weeks && imp.weights) {
+                data.participants = imp.participants; data.weeks = imp.weeks; data.weights = imp.weights; data.differences = imp.differences || {};
+                saveData(); renderAll(); showToast('✅ Datos importados');
+            } else showToast('❌ Archivo inválido');
+        } catch { showToast('❌ Error al leer el archivo'); }
+    };
+    reader.readAsText(file); event.target.value = '';
+}
+
+// ══════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════
+function confirmReset()  { document.getElementById('resetModal').classList.add('show'); }
+function closeResetModal() { document.getElementById('resetModal').classList.remove('show'); }
+function resetAll() {
+    data = { participants:[], weeks:[], weights:{}, differences:{}, pdfs:[] };
+    saveData(); closeResetModal(); renderAll(); showToast('🗑️ Todo reiniciado');
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(msg) {
+    const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════
+// EDITABLE DIFFERENCES
+// ══════════════════════════════════════════
+function editDifference(name) {
+    const rows = document.querySelectorAll('#tableBody tr');
+    for (const row of rows) {
+        const first = row.querySelector('td strong');
+        if (first && first.textContent === name) {
+            const lastTd = row.querySelector('td:last-child');
+            const cur    = data.differences[name] !== undefined ? data.differences[name] : '';
+            lastTd.innerHTML = `<input type="number" step="0.1" class="diff-input-inline" value="${cur}" placeholder="±kg" onblur="saveDifference('${name.replace(/'/g,"\\'")}', this)" onkeydown="if(event.key==='Enter') this.blur(); if(event.key==='Escape'){this.value='';this.blur();}">`;
+            const inp = lastTd.querySelector('input'); inp.focus(); inp.select(); break;
+        }
+    }
+}
+
+function saveDifference(name, input) {
+    const val = input.value.trim();
+    if (val === '') delete data.differences[name]; else data.differences[name] = parseFloat(val);
+    saveData(); renderTable(); renderStats(); showToast(`✅ Diferencia de ${name} actualizada`);
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+loadData();
+renderAll();
+</script>
+</body>
+</html>
