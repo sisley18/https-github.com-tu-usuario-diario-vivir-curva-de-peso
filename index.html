@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIARIO VIVIR – Curva Grupal de Peso</title>
+    <meta name="description" content="Seguimiento semanal de peso del grupo ALCO Diario Vivir.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #f7f4ef;
+            --bg2: #ffffff;
+            --card: rgba(255,255,255,0.9);
+            --green: #16a34a;
+            --green-light: #4ade80;
+            --green-pale: #dcfce7;
+            --teal: #0d9488;
+            --teal-light: #2dd4bf;
+            --violet: #7c3aed;
+            --violet-light: #a78bfa;
+            --orange: #ea580c;
+            --orange-light: #fb923c;
+            --amber: #d97706;
+            --red: #dc2626;
+            --text: #1c1917;
+            --text2: #57534e;
+            --muted: #a8a29e;
+            --border: rgba(0,0,0,0.08);
+            --border2: rgba(0,0,0,0.14);
+            --shadow: 0 4px 24px rgba(0,0,0,0.07);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.12);
+            --r: 18px;
+            --r-sm: 12px;
+            --r-xs: 8px;
+            --ease: 0.28s cubic-bezier(0.4,0,0.2,1);
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ─── LOGIN ─── */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #fef9f0 0%, #f0fdf4 50%, #faf5ff 100%);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        #loginScreen::before {
+            content:'';
+            position:absolute;
+            width:600px; height:600px;
+            border-radius:50%;
+            background: radial-gradient(circle, rgba(22,163,74,0.12) 0%, transparent 70%);
+            top:-150px; left:-150px;
+            animation: pulse 8s ease-in-out infinite;
+        }
+        #loginScreen::after {
+            content:'';
+            position:absolute;
+            width:500px; height:500px;
+            border-radius:50%;
+            background: radial-gradient(circle, rgba(124,58,237,0.08) 0%, transparent 70%);
+            bottom:-100px; right:-100px;
+            animation: pulse 10s ease-in-out infinite reverse;
+        }
+        @keyframes pulse {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+        .login-card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 28px;
+            padding: 52px 44px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5);
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            animation: cardIn 0.5s ease;
+        }
+        @keyframes cardIn {
+            from { transform: translateY(30px); opacity:0; }
+            to { transform: translateY(0); opacity:1; }
+        }
+        .login-leaf {
+            font-size: 3.5rem;
+            margin-bottom: 6px;
+            display: block;
+            animation: spin 3s ease-in-out infinite alternate;
+        }
+        @keyframes spin {
+            from { transform: rotate(-8deg); }
+            to { transform: rotate(8deg); }
+        }
+        .login-group-name {
+            font-size: 2.1rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--green) 0%, var(--teal) 60%, var(--violet) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            margin-bottom: 4px;
+        }
+        .login-subtitle {
+            font-size: 0.9rem;
+            color: var(--text2);
+            margin-bottom: 36px;
+            font-weight: 400;
+        }
+        .login-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text2);
+            text-align: left;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .login-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--border);
+            border-radius: var(--r-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text);
+            background: var(--bg);
+            text-align: center;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            outline: none;
+            transition: var(--ease);
+            margin-bottom: 8px;
+        }
+        .login-input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 4px rgba(22,163,74,0.12);
+            background: white;
+        }
+        .login-hint {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-bottom: 24px;
+            text-align: left;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--green) 0%, var(--teal) 100%);
+            color: white;
+            border: none;
+            border-radius: var(--r-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--ease);
+            box-shadow: 0 6px 20px rgba(22,163,74,0.3);
+            letter-spacing: 0.5px;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(22,163,74,0.4);
+        }
+        .btn-login:active { transform: translateY(0); }
+        .login-error {
+            background: rgba(220,38,38,0.08);
+            border: 1px solid rgba(220,38,38,0.2);
+            color: var(--red);
+            border-radius: var(--r-xs);
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 12px;
+            display: none;
+            animation: shake 0.3s ease;
+        }
+        @keyframes shake {
+            0%,100% { transform:translateX(0); }
+            25% { transform:translateX(-6px); }
+            75% { transform:translateX(6px); }
+        }
+        .login-footer {
+            margin-top: 32px;
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        /* ─── DASHBOARD ─── */
+        #dashboard { display: none; }
+        
+        .top-bar {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 0 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            height: 68px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .top-bar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+        .top-bar-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--green), var(--teal));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .top-bar-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+        .top-bar-sub {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 400;
+        }
+        .user-badge {
+            background: linear-gradient(135deg, rgba(22,163,74,0.1), rgba(13,148,136,0.1));
+            border: 1.5px solid rgba(22,163,74,0.2);
+            border-radius: 20px;
+            padding: 6px 16px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--green);
+            letter-spacing: 1px;
+        }
+        #btnLogout {
+            padding: 8px 16px;
+            border: 1.5px solid var(--border2);
+            border-radius: var(--r-xs);
+            background: transparent;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text2);
+            cursor: pointer;
+            transition: var(--ease);
+        }
+        #btnLogout:hover { background: rgba(0,0,0,0.04); }
+
+        /* ─── MAIN CONTENT ─── */
+        .main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 24px 60px;
+        }
+
+        /* ─── WEIGHT ENTRY HERO ─── */
+        .weight-hero {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #faf5ff 100%);
+            border: 1.5px solid rgba(22,163,74,0.18);
+            border-radius: 24px;
+            padding: 32px 36px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .weight-hero::before {
+            content: '⚖️';
+            position: absolute;
+            right: 28px;
+            top: 24px;
+            font-size: 4rem;
+            opacity: 0.12;
+        }
+        .weight-hero-title {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .weight-hero-sub {
+            font-size: 0.88rem;
+            color: var(--text2);
+            margin-bottom: 24px;
+        }
+        .weight-entry-row {
+            display: flex;
+            gap: 14px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .entry-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .entry-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text2);
+        }
+        .entry-input {
+            padding: 13px 18px;
+            border: 2px solid rgba(22,163,74,0.2);
+            border-radius: var(--r-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            background: white;
+            outline: none;
+            transition: var(--ease);
+        }
+        .entry-input:focus {
+            border-color: var(--green);
+            box-shadow: 0 0 0 4px rgba(22,163,74,0.1);
+        }
+        .entry-input[type="date"] { min-width: 180px; cursor: pointer; }
+        .entry-input[type="number"] { width: 140px; }
+        .btn-register {
+            padding: 13px 28px;
+            background: linear-gradient(135deg, var(--green), var(--teal));
+            color: white;
+            border: none;
+            border-radius: var(--r-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--ease);
+            box-shadow: 0 4px 16px rgba(22,163,74,0.28);
+            white-space: nowrap;
+        }
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(22,163,74,0.38);
+        }
+
+        /* ─── STATS ─── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        @media (max-width: 700px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+        .stat {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            padding: 20px;
+            text-align: center;
+            transition: var(--ease);
+            box-shadow: var(--shadow);
+        }
+        .stat:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--green);
+            line-height: 1;
+            margin-bottom: 6px;
+        }
+        .stat-lbl {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--muted);
+        }
+
+        /* ─── CARDS ─── */
+        .card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: var(--r);
+            padding: 28px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+        .card-head {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .card-head-icon {
+            width: 36px; height: 36px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+        .icon-green { background: rgba(22,163,74,0.1); }
+        .icon-violet { background: rgba(124,58,237,0.1); }
+        .icon-orange { background: rgba(234,88,12,0.1); }
+        .icon-teal { background: rgba(13,148,136,0.1); }
+        .card-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+
+        /* ─── CHART TABS ─── */
+        .chart-tabs {
+            display: flex;
+            gap: 4px;
+            background: rgba(0,0,0,0.04);
+            border-radius: var(--r-xs);
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .chart-tab {
+            flex: 1;
+            padding: 9px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: var(--ease);
+        }
+        .chart-tab.active {
+            background: white;
+            color: var(--green);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .chart-wrap {
+            position: relative;
+            width: 100%;
+            height: 380px;
+        }
+
+        /* ─── TABLE ─── */
+        .table-scroll { overflow-x: auto; border-radius: var(--r-xs); border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+        thead th {
+            background: linear-gradient(to right, rgba(22,163,74,0.05), rgba(13,148,136,0.04));
+            padding: 11px 16px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--text);
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            color: var(--text2);
+        }
+        tbody tr:hover td { background: rgba(22,163,74,0.03); }
+        tbody tr:last-child td { border-bottom: none; }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 9px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-up   { background: rgba(220,38,38,0.1);  color: var(--red); }
+        .badge-down { background: rgba(22,163,74,0.1);  color: var(--green); }
+        .badge-same { background: rgba(168,162,158,0.12); color: var(--muted); }
+        .my-row td  { background: rgba(22,163,74,0.04) !important; font-weight: 600 !important; }
+
+        /* ─── PDF SECTION ─── */
+        .pdf-drop {
+            border: 2px dashed rgba(124,58,237,0.25);
+            border-radius: var(--r-sm);
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--ease);
+            margin-bottom: 16px;
+        }
+        .pdf-drop:hover {
+            border-color: rgba(124,58,237,0.5);
+            background: rgba(124,58,237,0.03);
+        }
+        .pdf-drop-icon { font-size: 2.4rem; margin-bottom: 8px; }
+        .pdf-drop strong { font-size: 0.95rem; color: var(--text); }
+        .pdf-drop p { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+        #pdfFileInput { display: none; }
+        .pdf-list { display: flex; flex-direction: column; gap: 10px; }
+        .pdf-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: linear-gradient(to right, rgba(124,58,237,0.04), rgba(22,163,74,0.02));
+            border: 1px solid rgba(124,58,237,0.1);
+            border-radius: var(--r-sm);
+            transition: var(--ease);
+        }
+        .pdf-item:hover { border-color: rgba(124,58,237,0.25); box-shadow: var(--shadow); }
+        .pdf-icon {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--violet), #ec4899);
+            border-radius: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: white;
+            flex-shrink: 0;
+        }
+        .pdf-info { flex: 1; min-width: 0; }
+        .pdf-name { font-size: 0.9rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .pdf-meta { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
+        .btn-pdf-open {
+            padding: 7px 14px;
+            background: linear-gradient(135deg, var(--violet), var(--violet-light));
+            color: white;
+            border: none;
+            border-radius: var(--r-xs);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--ease);
+            flex-shrink: 0;
+        }
+        .btn-pdf-open:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+        .btn-pdf-del {
+            padding: 7px 10px;
+            background: rgba(220,38,38,0.08);
+            color: var(--red);
+            border: 1px solid rgba(220,38,38,0.15);
+            border-radius: var(--r-xs);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--ease);
+            flex-shrink: 0;
+        }
+        .btn-pdf-del:hover { background: var(--red); color: white; }
+
+        /* ─── MY HISTORY ─── */
+        .history-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .history-chip {
+            background: rgba(22,163,74,0.08);
+            border: 1px solid rgba(22,163,74,0.18);
+            border-radius: 20px;
+            padding: 7px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .history-chip .del-entry {
+            color: var(--red);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(220,38,38,0.1);
+            transition: var(--ease);
+        }
+        .history-chip .del-entry:hover { background: var(--red); color: white; }
+
+        /* ─── EMPTY STATE ─── */
+        .empty {
+            text-align: center;
+            padding: 36px 20px;
+            color: var(--muted);
+        }
+        .empty-emoji { font-size: 2.8rem; margin-bottom: 10px; }
+        .empty p { font-size: 0.9rem; }
+
+        /* ─── TOAST ─── */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            padding: 14px 22px;
+            background: var(--text);
+            color: white;
+            border-radius: var(--r-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            z-index: 9999;
+            transform: translateY(80px);
+            opacity: 0;
+            transition: var(--ease);
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 600px) {
+            .login-card { padding: 36px 24px; }
+            .weight-hero { padding: 24px; }
+            .weight-entry-row { flex-direction: column; }
+            .entry-input[type="number"] { width: 100%; }
+            .top-bar { padding: 0 16px; gap: 10px; }
+            .top-bar-sub { display: none; }
+            .main { padding: 20px 16px 50px; }
+            .card { padding: 20px; }
+        }
+
+        /* ─── TREND INDICATOR ─── */
+        .trend-up   { color: var(--red); }
+        .trend-down { color: var(--green); }
+        .trend-flat { color: var(--muted); }
+
+        /* ─── WEEK LABEL IN TABLE ─── */
+        .week-date-th { font-size: 0.75rem; line-height: 1.3; }
+        .week-num { display: block; font-size: 0.68rem; color: var(--muted); font-weight: 500; }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════ LOGIN ═══════════════════ -->
+<div id="loginScreen">
+    <div class="login-card">
+        <span class="login-leaf">🌿</span>
+        <div class="login-group-name">DIARIO VIVIR</div>
+        <p class="login-subtitle">Curva Grupal de Peso · ALCO</p>
+
+        <label class="login-label" for="keyInput">Tu clave personal</label>
+        <input class="login-input" type="text" id="keyInput"
+               placeholder="Ej: 15DV"
+               maxlength="5"
+               autocomplete="off"
+               onkeydown="if(event.key==='Enter') doLogin()">
+        <p class="login-hint">Número del 1 al 50 seguido de "DV" — ejemplo: <strong>7DV</strong>, <strong>23DV</strong></p>
+        <button class="btn-login" onclick="doLogin()">✅ Ingresar</button>
+        <div class="login-error" id="loginError">❌ Clave no válida. Revisá tu código.</div>
+        <p class="login-footer">🔒 Acceso exclusivo para miembros del grupo Diario Vivir</p>
+    </div>
+</div>
+
+<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+<div id="dashboard">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="top-bar-logo">
+            <div class="top-bar-icon">🌿</div>
+            <div>
+                <div class="top-bar-title">DIARIO VIVIR</div>
+                <div class="top-bar-sub">Curva Grupal de Peso</div>
+            </div>
+        </div>
+        <span class="user-badge" id="topUserBadge">—</span>
+        <button id="btnLogout" onclick="doLogout()">Salir →</button>
+    </div>
+
+    <div class="main">
+
+        <!-- WEIGHT ENTRY HERO -->
+        <div class="weight-hero">
+            <div class="weight-hero-title">📌 Registrá tu peso de esta semana</div>
+            <p class="weight-hero-sub">Seleccioná la fecha y escribí tu peso. Podés actualizar tu registro cuando quieras.</p>
+            <div class="weight-entry-row">
+                <div class="entry-group">
+                    <label class="entry-label">📅 Fecha</label>
+                    <input class="entry-input" type="date" id="entryDate">
+                </div>
+                <div class="entry-group">
+                    <label class="entry-label">⚖️ Peso (kg)</label>
+                    <input class="entry-input" type="number" id="entryWeight"
+                           step="0.1" min="20" max="300"
+                           placeholder="Ej: 75.5"
+                           onkeydown="if(event.key==='Enter') registerWeight()">
+                </div>
+                <button class="btn-register" onclick="registerWeight()">💾 Guardar mi peso</button>
+            </div>
+        </div>
+
+        <!-- MY HISTORY -->
+        <div class="card" id="myHistoryCard" style="display:none;">
+            <div class="card-head">
+                <div class="card-head-icon icon-green">🗓️</div>
+                <div class="card-title">Mi Historial — <span id="myCodeLabel">—</span></div>
+            </div>
+            <div class="history-chips" id="myHistoryList"></div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-row" id="statsRow" style="display:none;">
+            <div class="stat">
+                <div class="stat-val" id="sPartic">0</div>
+                <div class="stat-lbl">Participantes</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="sWeeks">0</div>
+                <div class="stat-lbl">Registros Totales</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="sAvg">—</div>
+                <div class="stat-lbl">Promedio Grupal</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" id="sBest">—</div>
+                <div class="stat-lbl">Mejor Baja del Grupo</div>
+            </div>
+        </div>
+
+        <!-- CHART -->
+        <div class="card" id="chartCard" style="display:none;">
+            <div class="card-head">
+                <div class="card-head-icon icon-green">📈</div>
+                <div class="card-title">Curva Grupal de Peso</div>
+            </div>
+            <div class="chart-tabs">
+                <button class="chart-tab active" onclick="setMode('all',this)" id="tabAll">Todos los miembros</button>
+                <button class="chart-tab" onclick="setMode('avg',this)" id="tabAvg">Promedio grupal</button>
+                <button class="chart-tab" onclick="setMode('me',this)" id="tabMe">Solo yo</button>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <!-- TABLE -->
+        <div class="card" id="tableCard" style="display:none;">
+            <div class="card-head">
+                <div class="card-head-icon icon-teal">📋</div>
+                <div class="card-title">Tabla de Registro Semanal</div>
+            </div>
+            <div class="table-scroll">
+                <table>
+                    <thead id="tHead"></thead>
+                    <tbody id="tBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PDF MATERIALS -->
+        <div class="card">
+            <div class="card-head">
+                <div class="card-head-icon icon-violet">📄</div>
+                <div class="card-title">Materiales del Grupo</div>
+            </div>
+            <div class="pdf-drop" onclick="document.getElementById('pdfFileInput').click()" id="pdfDrop">
+                <div class="pdf-drop-icon">📤</div>
+                <strong>Subir material</strong>
+                <p>PDF, Word o PowerPoint · máx. 8 MB</p>
+            </div>
+            <input type="file" id="pdfFileInput" accept=".pdf,.doc,.docx,.ppt,.pptx" onchange="handlePDF(event)">
+            <div class="pdf-list" id="pdfList">
+                <div class="empty">
+                    <div class="empty-emoji">📂</div>
+                    <p>Aún no hay materiales cargados</p>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /main -->
+</div><!-- /dashboard -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA MODEL
+// ═══════════════════════════════════════════════
+/**
+ * localStorage key: 'dv_data'
+ * Shape:
+ * {
+ *   weights: {
+ *     "7DV": [ {date:"2026-04-07", kg:75.5}, ... ],
+ *     "15DV": [ ... ]
+ *   },
+ *   pdfs: [ {name, size, type, date, data} ]
+ * }
+ */
+const STORE = 'dv_data';
+let db = { weights: {}, pdfs: [] };
+let currentUser = null;
+let chartInstance = null;
+let chartMode = 'all';
+
+// ─── Valid keys: 1DV … 50DV ─────────────────
+function isValidKey(k) {
+    const upper = k.toUpperCase().trim();
+    const m = upper.match(/^(\d+)DV$/);
+    if (!m) return false;
+    const n = parseInt(m[1]);
+    return n >= 1 && n <= 50;
+}
+
+// ═══════════════════════════════════════════════
+//  PERSISTENCE
+// ═══════════════════════════════════════════════
+function save() {
+    localStorage.setItem(STORE, JSON.stringify(db));
+}
+function load() {
+    try {
+        const raw = localStorage.getItem(STORE);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            db.weights = parsed.weights || {};
+            db.pdfs    = parsed.pdfs    || [];
+        }
+    } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ═══════════════════════════════════════════════
+function doLogin() {
+    const input = document.getElementById('keyInput');
+    const key = input.value.trim().toUpperCase();
+    const errEl = document.getElementById('loginError');
+
+    if (!isValidKey(key)) {
+        errEl.style.display = 'block';
+        input.focus();
+        return;
+    }
+    errEl.style.display = 'none';
+    currentUser = key;
+
+    // auto-register if first time
+    if (!db.weights[currentUser]) {
+        db.weights[currentUser] = [];
+        save();
+    }
+
+    // transition
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    document.getElementById('topUserBadge').textContent = currentUser;
+    document.getElementById('myCodeLabel').textContent = currentUser;
+
+    // set today as default date
+    document.getElementById('entryDate').value = todayStr();
+
+    renderAll();
+}
+
+function doLogout() {
+    currentUser = null;
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('keyInput').value = '';
+}
+
+// ═══════════════════════════════════════════════
+//  DATE HELPERS
+// ═══════════════════════════════════════════════
+function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+}
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+}
+function fmtDateShort(iso) {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}`;
+}
+function weekLabel(iso) {
+    // "Semana del 07/04/2026"
+    return fmtDate(iso);
+}
+
+// get all unique dates across all users, sorted
+function allDates() {
+    const set = new Set();
+    Object.values(db.weights).forEach(arr => arr.forEach(e => set.add(e.date)));
+    return [...set].sort();
+}
+
+// get kg for a user on a specific date (or null)
+function getKg(user, date) {
+    const entries = db.weights[user] || [];
+    const found = entries.find(e => e.date === date);
+    return found ? found.kg : null;
+}
+
+// ═══════════════════════════════════════════════
+//  WEIGHT REGISTRATION
+// ═══════════════════════════════════════════════
+function registerWeight() {
+    const date = document.getElementById('entryDate').value;
+    const kgStr = document.getElementById('entryWeight').value;
+
+    if (!date) return toast('Seleccioná una fecha');
+    if (!kgStr || isNaN(parseFloat(kgStr))) return toast('Ingresá tu peso en kg');
+    const kg = parseFloat(parseFloat(kgStr).toFixed(1));
+    if (kg < 20 || kg > 300) return toast('Peso fuera de rango (20–300 kg)');
+
+    const arr = db.weights[currentUser];
+    const existing = arr.findIndex(e => e.date === date);
+    if (existing >= 0) {
+        arr[existing].kg = kg;
+        toast(`✅ Peso actualizado: ${kg} kg · ${fmtDate(date)}`);
+    } else {
+        arr.push({ date, kg });
+        arr.sort((a,b) => a.date.localeCompare(b.date));
+        toast(`✅ Peso registrado: ${kg} kg · ${fmtDate(date)}`);
+    }
+
+    save();
+    document.getElementById('entryWeight').value = '';
+    renderAll();
+}
+
+function deleteEntry(date) {
+    db.weights[currentUser] = db.weights[currentUser].filter(e => e.date !== date);
+    save();
+    renderAll();
+    toast('Registro eliminado');
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER ALL
+// ═══════════════════════════════════════════════
+function renderAll() {
+    renderMyHistory();
+    renderStats();
+    renderChart();
+    renderTable();
+    renderPDFs();
+}
+
+// ─── MY HISTORY ─────────────────────────────
+function renderMyHistory() {
+    const card = document.getElementById('myHistoryCard');
+    const list = document.getElementById('myHistoryList');
+    const entries = db.weights[currentUser] || [];
+
+    if (entries.length === 0) {
+        card.style.display = 'none';
+        return;
+    }
+    card.style.display = 'block';
+
+    const sorted = [...entries].sort((a,b) => b.date.localeCompare(a.date));
+    list.innerHTML = sorted.map(e => {
+        const prev = entries.find(ee => ee.date < e.date && entries.indexOf(ee) === entries.length - 2);
+        return `
+        <div class="history-chip">
+            <span>📅 ${fmtDate(e.date)}</span>
+            <strong>${e.kg} kg</strong>
+            <span class="del-entry" onclick="deleteEntry('${e.date}')" title="Eliminar">✕</span>
+        </div>`;
+    }).join('');
+}
+
+// ─── STATS ──────────────────────────────────
+function renderStats() {
+    const row = document.getElementById('statsRow');
+    const dates = allDates();
+    const users = Object.keys(db.weights);
+
+    if (dates.length === 0) { row.style.display = 'none'; return; }
+    row.style.display = 'grid';
+
+    document.getElementById('sPartic').textContent = users.length;
+    document.getElementById('sWeeks').textContent  = dates.length;
+
+    // avg of latest weight per user
+    let avgSum = 0, avgCnt = 0;
+    let bestDiff = null, bestUser = '';
+    users.forEach(u => {
+        const arr = db.weights[u];
+        if (!arr || arr.length === 0) return;
+        const sorted = [...arr].sort((a,b) => a.date.localeCompare(b.date));
+        const last = sorted[sorted.length-1].kg;
+        avgSum += last; avgCnt++;
+        if (arr.length >= 2) {
+            const first = sorted[0].kg;
+            const diff = last - first;
+            if (bestDiff === null || diff < bestDiff) {
+                bestDiff = diff;
+                bestUser = u;
+            }
+        }
+    });
+    const avgEl = document.getElementById('sAvg');
+    avgEl.textContent = avgCnt > 0 ? (avgSum/avgCnt).toFixed(1)+' kg' : '—';
+
+    const bestEl = document.getElementById('sBest');
+    if (bestDiff !== null && bestDiff < 0) {
+        bestEl.textContent = `${bestUser} (${bestDiff.toFixed(1)})`;
+        bestEl.style.color = 'var(--green)';
+    } else {
+        bestEl.textContent = '—';
+        bestEl.style.color = '';
+    }
+}
+
+// ─── CHART ──────────────────────────────────
+const COLORS = [
+    '#16a34a','#0d9488','#7c3aed','#ea580c','#2563eb',
+    '#db2777','#059669','#d97706','#9333ea','#0891b2',
+    '#65a30d','#dc2626','#0284c7','#c026d3','#b45309'
+];
+
+function setMode(mode, btn) {
+    chartMode = mode;
+    document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    renderChart();
+}
+
+function renderChart() {
+    const card = document.getElementById('chartCard');
+    const dates = allDates();
+    const users = Object.keys(db.weights);
+    if (dates.length === 0) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+
+    if (chartInstance) chartInstance.destroy();
+
+    const datasets = [];
+
+    if (chartMode === 'all' || chartMode === 'both') {
+        users.forEach((u, i) => {
+            const isMe = u === currentUser;
+            datasets.push({
+                label: u,
+                data: dates.map(d => getKg(u, d)),
+                borderColor: isMe ? '#16a34a' : COLORS[i % COLORS.length],
+                backgroundColor: (isMe ? '#16a34a' : COLORS[i % COLORS.length]) + '20',
+                borderWidth: isMe ? 3.5 : 2,
+                pointRadius: isMe ? 6 : 4,
+                pointHoverRadius: 8,
+                pointBackgroundColor: isMe ? '#16a34a' : COLORS[i % COLORS.length],
+                tension: 0.35,
+                spanGaps: true,
+                fill: false,
+                borderDash: isMe ? [] : [],
+                order: isMe ? 0 : 1
+            });
+        });
+    }
+
+    if (chartMode === 'avg' || chartMode === 'both') {
+        const avgData = dates.map(d => {
+            let sum = 0, cnt = 0;
+            users.forEach(u => { const v = getKg(u,d); if (v!==null){sum+=v;cnt++;} });
+            return cnt > 0 ? parseFloat((sum/cnt).toFixed(1)) : null;
+        });
+        datasets.push({
+            label: '📊 Promedio Grupal',
+            data: avgData,
+            borderColor: '#1c1917',
+            backgroundColor: 'rgba(28,25,23,0.07)',
+            borderWidth: 3,
+            borderDash: chartMode === 'both' ? [8,4] : [],
+            pointRadius: 5,
+            pointHoverRadius: 8,
+            pointBackgroundColor: '#1c1917',
+            tension: 0.35,
+            spanGaps: true,
+            fill: chartMode === 'avg',
+            order: -1
+        });
+    }
+
+    if (chartMode === 'me') {
+        const myData = dates.map(d => getKg(currentUser, d));
+        datasets.push({
+            label: `Mi peso (${currentUser})`,
+            data: myData,
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22,163,74,0.12)',
+            borderWidth: 3.5,
+            pointRadius: 6,
+            pointHoverRadius: 9,
+            pointBackgroundColor: '#16a34a',
+            pointBorderColor: 'white',
+            pointBorderWidth: 2,
+            tension: 0.35,
+            spanGaps: true,
+            fill: true
+        });
+    }
+
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dates.map(fmtDateShort),
+            datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { family: 'Inter', size: 11, weight: '600' },
+                        padding: 14,
+                        usePointStyle: true,
+                        pointStyleWidth: 10
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(28,25,23,0.93)',
+                    titleFont: { family: 'Inter', weight: '700', size: 13 },
+                    bodyFont: { family: 'Inter', size: 12 },
+                    padding: 12,
+                    cornerRadius: 10,
+                    callbacks: {
+                        title: (items) => {
+                            const idx = items[0].dataIndex;
+                            return '📅 ' + fmtDate(dates[idx]);
+                        },
+                        label: (ctx) => {
+                            const v = ctx.parsed.y;
+                            if (v === null || v === undefined) return null;
+                            return `  ${ctx.dataset.label}: ${v} kg`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { font: { family:'Inter', size:11 }, color:'#78716c' }
+                },
+                y: {
+                    grid: { color: 'rgba(0,0,0,0.06)' },
+                    ticks: {
+                        font: { family:'Inter', size:11 },
+                        color:'#78716c',
+                        callback: v => v + ' kg'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// ─── TABLE ──────────────────────────────────
+function renderTable() {
+    const card = document.getElementById('tableCard');
+    const dates = allDates();
+    const users = Object.keys(db.weights);
+
+    if (dates.length === 0 || users.length === 0) { card.style.display = 'none'; return; }
+    card.style.display = 'block';
+
+    const tHead = document.getElementById('tHead');
+    const tBody = document.getElementById('tBody');
+
+    // BUILD HEADER
+    let th = '<tr><th>Participante</th>';
+    dates.forEach((d, i) => {
+        th += `<th class="week-date-th">${fmtDateShort(d)}<span class="week-num">Sem. ${i+1}</span></th>`;
+        if (i > 0) th += `<th class="week-date-th" style="color:var(--teal);font-size:0.72rem;">Dif.</th>`;
+    });
+    th += '<th>Total</th></tr>';
+    tHead.innerHTML = th;
+
+    // BUILD ROWS
+    let rows = '';
+    users.forEach(u => {
+        const isMe = u === currentUser;
+        const cls = isMe ? ' class="my-row"' : '';
+        let cells = '';
+        let firstKg = null, lastKg = null;
+
+        dates.forEach((d, i) => {
+            const kg = getKg(u, d);
+            cells += `<td>${kg !== null ? kg + ' kg' : '<span style="color:var(--muted)">—</span>'}</td>`;
+
+            if (kg !== null) {
+                if (firstKg === null) firstKg = kg;
+                lastKg = kg;
+            }
+
+            if (i > 0) {
+                // find prev kg
+                let prevKg = null;
+                for (let j = i-1; j >= 0; j--) {
+                    const v = getKg(u, dates[j]);
+                    if (v !== null) { prevKg = v; break; }
+                }
+                if (prevKg !== null && kg !== null) {
+                    const diff = kg - prevKg;
+                    const cls2 = diff < 0 ? 'badge-down' : diff > 0 ? 'badge-up' : 'badge-same';
+                    const sign = diff > 0 ? '+' : '';
+                    cells += `<td><span class="badge ${cls2}">${sign}${diff.toFixed(1)}</span></td>`;
+                } else {
+                    cells += `<td style="color:var(--muted)">—</td>`;
+                }
+            }
+        });
+
+        // total diff
+        let totalHtml = '<span style="color:var(--muted)">—</span>';
+        if (firstKg !== null && lastKg !== null && firstKg !== lastKg) {
+            const total = lastKg - firstKg;
+            const cls2 = total < 0 ? 'badge-down' : total > 0 ? 'badge-up' : 'badge-same';
+            const sign = total > 0 ? '+' : '';
+            totalHtml = `<span class="badge ${cls2}">${sign}${total.toFixed(1)} kg</span>`;
+        }
+
+        rows += `<tr${cls}>
+            <td><strong>${u}${isMe ? ' 👤' : ''}</strong></td>
+            ${cells}
+            <td>${totalHtml}</td>
+        </tr>`;
+    });
+
+    // AVG ROW
+    let avgCells = '';
+    dates.forEach((d,i) => {
+        let sum = 0, cnt = 0;
+        users.forEach(u => { const v = getKg(u,d); if(v!==null){sum+=v;cnt++;} });
+        avgCells += `<td>${cnt > 0 ? (sum/cnt).toFixed(1)+' kg' : '—'}</td>`;
+        if (i > 0) {
+            let sumP = 0, cntP = 0;
+            users.forEach(u => { const v = getKg(u, dates[i-1]); if(v!==null){sumP+=v;cntP++;} });
+            if (cnt > 0 && cntP > 0) {
+                const diff = (sum/cnt) - (sumP/cntP);
+                const cls2 = diff < 0 ? 'badge-down' : diff > 0 ? 'badge-up' : 'badge-same';
+                const sign = diff > 0 ? '+' : '';
+                avgCells += `<td><span class="badge ${cls2}">${sign}${diff.toFixed(1)}</span></td>`;
+            } else {
+                avgCells += `<td>—</td>`;
+            }
+        }
+    });
+    rows += `<tr style="background:rgba(22,163,74,0.05);font-weight:700;border-top:2px solid rgba(22,163,74,0.2);">
+        <td>📊 Promedio</td>
+        ${avgCells}
+        <td></td>
+    </tr>`;
+
+    tBody.innerHTML = rows;
+}
+
+// ═══════════════════════════════════════════════
+//  PDF MATERIALS
+// ═══════════════════════════════════════════════
+function handlePDF(ev) {
+    const file = ev.target.files[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) return toast('❌ El archivo supera 8 MB');
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        db.pdfs.push({
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            date: todayStr(),
+            data: e.target.result
+        });
+        save();
+        renderPDFs();
+        toast('✅ Material cargado: ' + file.name);
+    };
+    reader.readAsDataURL(file);
+    ev.target.value = '';
+}
+
+function deletePDF(idx) {
+    db.pdfs.splice(idx, 1);
+    save();
+    renderPDFs();
+    toast('Material eliminado');
+}
+
+function openPDF(idx) {
+    const p = db.pdfs[idx];
+    const win = window.open('', '_blank');
+    win.document.write(`
+        <html><head><title>${p.name}</title></head>
+        <body style="margin:0;">
+        <iframe src="${p.data}" style="width:100%;height:100vh;border:none;"></iframe>
+        </body></html>`);
+}
+
+function fmtSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(0) + ' KB';
+    return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function renderPDFs() {
+    const list = document.getElementById('pdfList');
+    if (!db.pdfs || db.pdfs.length === 0) {
+        list.innerHTML = `<div class="empty">
+            <div class="empty-emoji">📂</div>
+            <p>Aún no hay materiales cargados</p>
+        </div>`;
+        return;
+    }
+    list.innerHTML = db.pdfs.map((p, i) => `
+        <div class="pdf-item">
+            <div class="pdf-icon">📄</div>
+            <div class="pdf-info">
+                <div class="pdf-name">${p.name}</div>
+                <div class="pdf-meta">${fmtDate(p.date)} · ${fmtSize(p.size)}</div>
+            </div>
+            <button class="btn-pdf-open" onclick="openPDF(${i})">👁️ Ver</button>
+            <button class="btn-pdf-del" onclick="deletePDF(${i})">🗑️</button>
+        </div>
+    `).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+load();
+
+// auto-dismiss login error on typing
+document.getElementById('keyInput').addEventListener('input', () => {
+    document.getElementById('loginError').style.display = 'none';
+});
+</script>
+</body>
+</html>
